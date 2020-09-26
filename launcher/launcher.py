@@ -17,7 +17,7 @@ CMD_MULT_SERVO_UNLOAD = 0x14
 CMD_MULT_SERVO_POS_READ = 0x15
 
 RASPBERRY_PI = sys.platform == "linux"
-sys.stderr = open("error_log.txt", "a")
+# sys.stderr = open("error_log.txt", "a")
 
 
 class Launcher(Tk):
@@ -31,6 +31,7 @@ class Launcher(Tk):
         self.device = hid.device()
 
         self.process = None
+        self.pos_thread = threading.Thread(target=self.get_joints_pos, daemon=True)
         self.apps = list()
         self.joints_pos = [IntVar() for _ in range(6)]
         self.exit_joints_loop = False
@@ -128,14 +129,13 @@ class Launcher(Tk):
         print(f"Serial No: {self.device.get_serial_number_string()}")
 
         self.exit_joints_loop = False
-        threading.Thread(target=self.get_joints_pos, daemon=True).start()
+        self.pos_thread.start()
 
     def exit_joints_menu(self):
 
         self.exit_joints_loop = True
+        self.pos_thread.join()
 
-        # Wait to make sure that loop is over
-        time.sleep(0.5)
         self.device.close()
 
         self.joints_frame.grid_forget()

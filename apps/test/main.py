@@ -1,37 +1,24 @@
 from lib.arm import *
-
-set_speed(1)
-
-start_point = (130, -50, 0)
-dest_point = (130, 50, 0)
+import math
+import time
 
 grip_open()
-movel(appro(start_point, (0, 0, 40)), 2000, hand_orientation_down=True)
+jDepart = (497, 426, 738, 55, 500)
+movej(jDepart, 2000)
 
-kapla = 4
-for i in range(kapla):
-    # Move to next Kapla
-    kapla_pos = appro(start_point, (0, 0, (kapla - i) * 8))
-    kapla_lift = appro(kapla_pos, (0, 0, 10))
+pA = get_position(True)
 
-    movel(kapla_lift, 1000, hand_orientation_down=True)
-    movel(kapla_pos, 1000, hand_orientation_down=True)
+movel(appro(pA, (30, 0, 5)), 1000)
+grip_close(850)
 
-    grip_close()
+pAppr = appro(pA, (30, 0, 25))
+movel(pAppr, 1000)
 
-    # Lifting to prevent colliding with other Kapla.
-    movel(kapla_lift, 1000, hand_orientation_down=True)
+movel(appro(pA, (30, 0, 5)), 1000)
 
-    dest = appro(dest_point, (0, 0, i * 8))
-    dest_lift = appro(dest, (0, 0, 10))
+grip_open()
 
-    movel(dest_lift, 1000, hand_orientation_down=True)
-    movel(dest, 1000, hand_orientation_down=True)
-
-    grip_open()
-
-    # Lifting to prevent colliding with other Kapla.
-    movel(dest_lift, 1000, hand_orientation_down=True)
+time.sleep(2)
 
 movej((500, 500, 500, 500, 500), 2000)
 power_off()

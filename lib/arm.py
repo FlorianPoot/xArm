@@ -1,5 +1,6 @@
 from lib.servo_controller import *
 from lib.cartesian import compute_ik, compute_fk
+from lib.inverse_kinematics import FREE_ANGLE
 
 
 speed = 1
@@ -52,16 +53,15 @@ def movej(joint: tuple, time: int) -> None:
     move_servos((2, 3, 4, 5, 6), joint[::-1], int(time / speed))
 
 
-def movel(point: tuple, time: int, orientation=500, hand_orientation_down=False, waypoints=1, realtime=True) -> None:
+def movel(point: tuple, time: int, orientation=500, approach_angle=FREE_ANGLE, waypoints=1) -> None:
 
     """Move arm to point position within time.
 
             point: tuple(x, y, z)
             time: 0-65535 milliseconds
             orientation: the orientation of the hand
-            hand_orientation_down: keep the hand orientation down
+            approach_angle: calculates the angles considering a specific approach angle
             waypoints: number of points through which the arm will pass (Allows a more linear movement)
-            realtime: computes inverse kinematics while moving
 
     """
 
@@ -69,22 +69,15 @@ def movel(point: tuple, time: int, orientation=500, hand_orientation_down=False,
         current = get_position(cartesian=True)
         step_values = [abs(p - c) / waypoints for p, c in zip(point, current)]
 
-        if realtime:
-            for i in range(1, waypoints + 1):
-                way = (current[0] + (i * step_values[0]), current[1] + (i * step_values[1]), current[2] + (i * step_values[2]))
+        iks = list()
+        for i in range(1, waypoints + 1):
+            way = (current[0] + (i * step_values[0]), current[1] + (i * step_values[1]), current[2] + (i * step_values[2]))
+            iks.append(compute_ik(way, orientation, approach_angle))
 
-                ik = compute_ik(way, orientation, hand_orientation_down)
-                move_servos((2, 3, 4, 5, 6), ik[::-1], int(time / waypoints / speed))
-        else:
-            iks = list()
-            for i in range(1, waypoints + 1):
-                way = (current[0] + (i * step_values[0]), current[1] + (i * step_values[1]), current[2] + (i * step_values[2]))
-                iks.append(compute_ik(way, orientation, hand_orientation_down))
-
-            for ik in iks:
-                move_servos((2, 3, 4, 5, 6), ik[::-1], int(time / waypoints / speed))
+        for ik in iks:
+            move_servos((6, 5, 4, 3, 2), ik, int(time / waypoints / speed))
     else:
-        move_servos((2, 3, 4, 5, 6), compute_ik(point, orientation, hand_orientation_down)[::-1], int(time / speed))
+        move_servos((6, 5, 4, 3, 2), compute_ik(point, orientation, approach_angle), int(time / speed))
 
 
 def appro(point: tuple, offset: tuple) -> tuple:
@@ -119,7 +112,7 @@ def get_position(cartesian=False) -> tuple:
     if not cartesian:
         return position
     else:
-        return tuple(compute_fk(list(position)))
+        return compute_fk(position)
 
 
 def power_on() -> None:
