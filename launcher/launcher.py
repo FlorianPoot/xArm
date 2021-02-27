@@ -36,6 +36,7 @@ class Launcher(Tk):
         self.joints_pos = [IntVar() for _ in range(6)]
         self.points_pos = [IntVar() for _ in range(3)]
         self.exit_joints_loop = False
+        self.stop_pressed = False
 
         self.title("xArm Launcher")
 
@@ -237,6 +238,7 @@ class Launcher(Tk):
             self.event_generate("<Motion>", warp=True, x=0, y=0)
 
         self.process.terminate()
+        self.stop_pressed = True
 
     def running(self):
 
@@ -250,6 +252,9 @@ class Launcher(Tk):
             # showinfo("Done", "The application has finished running")
             self.state_label.config(text="DONE", fg="blue")
             time.sleep(2)
+        elif self.stop_pressed:
+            self.state_label.config(text="STOPPED", fg="yellow")
+            time.sleep(2)
         else:
             # showerror("Error", "An error occured")
             self.state_label.config(text="ERROR", fg="red")
@@ -260,6 +265,7 @@ class Launcher(Tk):
                 self.state_label.configure(background=fg, foreground=bg)
                 time.sleep(0.5)
 
+        self.stop_pressed = False
         self.state_label.config(text="IDLE", fg="grey")
         self.start_button.config(state=NORMAL)
         self.joints_button.config(state=NORMAL)
