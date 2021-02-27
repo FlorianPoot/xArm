@@ -5,12 +5,12 @@ import math
 base = Link(0, -1.57, 1.57)
 upperarm = Link(97, -1.75, 1.75)
 forearm = Link(95.5, -1.75, 1.75)
-hand = Link(150, -1.75, 1.75)
+hand = Link(150, -2, 2)
 
 inverse_k = InverseK(base, upperarm, forearm, hand)
 
 
-def compute_ik(target: tuple, orientation=500, approach_angle=FREE_ANGLE) -> tuple:
+def compute_ik(target: tuple, hand_orientation=500, approach_angle=FREE_ANGLE) -> tuple:
 
     """Computes the inverse kinematics on a full 3D referencial"""
 
@@ -24,11 +24,15 @@ def compute_ik(target: tuple, orientation=500, approach_angle=FREE_ANGLE) -> tup
         pos[i] += 500
     pos[2] = 500 - pos[2]
 
-    # Keep joint 5 align with joint 1 (base)
-    if pos[3] > 500:
-        pos.append(pos[0] + (500 - orientation))
+    if approach_angle != FREE_ANGLE:
+        # Keep joint 5 align with joint 1 (base)
+        pos.append(pos[0] + (500 - hand_orientation))
+        """if pos[2] > 500:
+            pos.append(pos[0] + (500 - orientation))
+        else:
+            pos.append((1000 - pos[0]) + (500 - orientation))"""
     else:
-        pos.append((1000 - pos[0]) + (500 - orientation))
+        pos.append(hand_orientation)
 
     # Check if arm is on target
     """fk = compute_fk(list(pos), hand_orientation_down)

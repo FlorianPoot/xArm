@@ -41,7 +41,7 @@ def move_servo(servo_id: int, position: int, time: int) -> None:
     buf[10] = position[1]
 
     device.write(buf)
-    sleep(time / 1000)
+    sleep((time + 50) / 1000)
 
 
 def move_servos(servos_id: tuple, positions: tuple, time: int) -> None:
@@ -72,7 +72,7 @@ def move_servos(servos_id: tuple, positions: tuple, time: int) -> None:
         buf[10 + index] = position[1]
 
     device.write(buf)
-    sleep(time / 1000)
+    sleep((time + 50) / 1000)
 
 
 def unload_servos(servos_id: tuple) -> None:

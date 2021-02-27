@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.messagebox import *
 
+from lib.cartesian import *
+
 import threading
 import subprocess
 import sys
@@ -31,9 +33,9 @@ class Launcher(Tk):
         self.device = hid.device()
 
         self.process = None
-        self.pos_thread = threading.Thread(target=self.get_joints_pos, daemon=True)
         self.apps = list()
         self.joints_pos = [IntVar() for _ in range(6)]
+        self.points_pos = [IntVar() for _ in range(3)]
         self.exit_joints_loop = False
 
         self.title("xArm Launcher")
@@ -68,6 +70,7 @@ class Launcher(Tk):
         self.listbox.select_set(0)
 
         self.joints_frame = Frame(self, padx=5, pady=5, highlightthickness=1, highlightbackground="black")
+        self.points_frame = Frame(self, padx=5, pady=5, highlightthickness=1, highlightbackground="black")
 
         if RASPBERRY_PI:
             start_image = PhotoImage(file="xArm/launcher/images/start.png")
@@ -114,12 +117,28 @@ class Launcher(Tk):
 
         for joint in range(6):
             f = Frame(self.joints_frame)
-            Label(f, text=f"Joint {joint + 1}: ", font="Arial 12").grid(column=0, row=0)
-            Label(f, textvariable=self.joints_pos[joint], font="Arial 15", relief=GROOVE, padx=5, pady=5).grid(column=1, row=0)
+            Label(f, text=f"Joint {joint + 1}: ", font="Arial 12").grid(column=0, row=0, sticky=N+S+E+W)
+            Label(f, textvariable=self.joints_pos[joint], font="Arial 15", relief=GROOVE, padx=5, pady=5).grid(column=1, row=0, sticky=N+S+E+W)
             f.grid(column=joint % 3, row=joint // 3, padx=10, pady=10)
 
-        self.joints_frame.grid(column=0, row=1)
-        self.back_button.grid(column=0, row=2)
+            self.joints_frame.columnconfigure(joint % 3, weight=1)
+            self.joints_frame.rowconfigure(joint // 3, weight=1)
+
+        self.joints_frame.grid(column=0, row=1, padx=40, pady=(0, 10), sticky=N+S+E+W)
+
+        axis = ("X", "Y", "Z")
+        for point in range(3):
+            f = Frame(self.points_frame)
+            Label(f, text=f"{axis[point]}: ", font="Arial 12").grid(column=0, row=0, sticky=N+S+E+W)
+            Label(f, textvariable=self.points_pos[point], font="Arial 15", relief=GROOVE, padx=5, pady=5).grid(column=1, row=0, sticky=N+S+E+W)
+            f.grid(column=point, row=0, padx=10, pady=10)
+
+            self.points_frame.columnconfigure(point, weight=1)
+            self.points_frame.rowconfigure(0, weight=1)
+
+        self.points_frame.grid(column=0, row=2, padx=80, pady=(10, 0), sticky=N+S+E+W)
+
+        self.back_button.grid(column=0, row=3, pady=15)
 
         # Connect to xArm
         self.device.open(0x0483, 0x5750)  # LOBOT VendorID/ProductID
@@ -129,16 +148,16 @@ class Launcher(Tk):
         print(f"Serial No: {self.device.get_serial_number_string()}")
 
         self.exit_joints_loop = False
-        self.pos_thread.start()
+        threading.Thread(target=self.get_joints_pos, daemon=True).start()
 
     def exit_joints_menu(self):
 
         self.exit_joints_loop = True
-        self.pos_thread.join()
 
         self.device.close()
 
         self.joints_frame.grid_forget()
+        self.points_frame.grid_forget()
         self.back_button.grid_forget()
 
         self.main_menu()
@@ -175,6 +194,10 @@ class Launcher(Tk):
             for joint, pos in zip(self.joints_pos, positions):
                 joint.set(pos)
 
+            points = compute_fk(tuple(positions))
+            for point, pos in zip(self.points_pos, points):
+                point.set(pos)
+
             # Refresh rate
             time.sleep(1)
 
@@ -187,6 +210,7 @@ class Launcher(Tk):
 
             self.start_button.config(state=DISABLED)
             self.stop_button.config(state=NORMAL)
+            self.joints_button.config(state=DISABLED)
 
             self.state_label.config(text="RUNNING", fg="green")
         else:
@@ -222,6 +246,7 @@ class Launcher(Tk):
 
         self.state_label.config(text="IDLE", fg="grey")
         self.start_button.config(state=NORMAL)
+        self.joints_button.config(state=NORMAL)
 
 
 if __name__ == "__main__":
