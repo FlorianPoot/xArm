@@ -33,7 +33,6 @@ class Launcher(Tk):
         self.device = hid.device()
 
         self.process = None
-        self.apps = list()
         self.joints_pos = [IntVar() for _ in range(6)]
         self.points_pos = [IntVar() for _ in range(3)]
         self.exit_joints_loop = False
@@ -63,10 +62,7 @@ class Launcher(Tk):
         self.listbox = Listbox(self, selectmode=BROWSE, font="Arial 18", activestyle="none")
         # self.listbox.grid(column=0, row=1, rowspan=3, padx=10, pady=10, sticky=N+S+E+W)
 
-        for app in os.listdir("xArm/apps" if RASPBERRY_PI else "../apps"):
-            self.apps.append(app)
-            self.listbox.insert(END, app)
-
+        self.update_apps_list()
         self.listbox.select_set(0)
 
         self.joints_frame = Frame(self, padx=5, pady=5, highlightthickness=1, highlightbackground="black")
@@ -99,6 +95,23 @@ class Launcher(Tk):
         self.rowconfigure(2, weight=1)
 
         self.mainloop()
+
+    def update_apps_list(self):
+
+        selected = self.listbox.curselection()
+        if len(selected) < 1:
+            selected = (0, )
+
+        # Clear all items
+        self.listbox.delete(0, END)
+
+        for app in os.listdir("xArm/apps" if RASPBERRY_PI else "../apps"):
+            self.listbox.insert(END, app)
+
+        self.listbox.select_set(selected[0])
+
+        # Refresh every 5 seconds
+        self.listbox.after(5000, self.update_apps_list)
 
     def main_menu(self):
 
@@ -141,14 +154,17 @@ class Launcher(Tk):
         self.back_button.grid(column=0, row=3, pady=15)
 
         # Connect to xArm
-        self.device.open(0x0483, 0x5750)  # LOBOT VendorID/ProductID
+        try:
+            self.device.open(0x0483, 0x5750)  # LOBOT VendorID/ProductID
+        except OSError:
+            showerror("Error", "Unable to connect to xArm (open failed)")
+        else:
+            print(f"Manufacturer: {self.device.get_manufacturer_string()}")
+            print(f"Product: {self.device.get_product_string()}")
+            print(f"Serial No: {self.device.get_serial_number_string()}")
 
-        print(f"Manufacturer: {self.device.get_manufacturer_string()}")
-        print(f"Product: {self.device.get_product_string()}")
-        print(f"Serial No: {self.device.get_serial_number_string()}")
-
-        self.exit_joints_loop = False
-        threading.Thread(target=self.get_joints_pos, daemon=True).start()
+            self.exit_joints_loop = False
+            threading.Thread(target=self.get_joints_pos, daemon=True).start()
 
     def exit_joints_menu(self):
 
