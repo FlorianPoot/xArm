@@ -106,6 +106,10 @@ def get_position(cartesian=False) -> tuple:
 
     position = get_servos_position((6, 5, 4, 3, 2))
 
+    for pos in position:
+        if not 0 <= pos <= 1000:
+            raise ValueError(f"unexpected value {pos}")
+
     if not cartesian:
         return position
     else:

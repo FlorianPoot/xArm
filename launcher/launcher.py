@@ -210,6 +210,9 @@ class Launcher(Tk):
 
             for joint, pos in zip(self.joints_pos, positions):
                 joint.set(pos)
+                self.update()
+                if not 0 <= pos <= 1000:
+                    showerror("Error", f"Unexpected value {pos}")
 
             points = compute_fk(tuple(positions))
             for point, pos in zip(self.points_pos, points):
