@@ -8,6 +8,11 @@ speed = 1
 
 
 def set_speed(value: float) -> None:
+    """
+    Divide move time by the given value.
+
+    :param value: 0-10
+    """
 
     global speed
 
@@ -18,45 +23,45 @@ def set_speed(value: float) -> None:
 
 
 def grip_open() -> None:
+
+    """Open the grip."""
+
     move_servo(1, 200, int(1000 / speed))
 
 
-def grip_close(value=None) -> None:
+def grip_close(value=650) -> None:
+    """
+    Close the grip with the given value.
 
-    if value is not None:
+    :param value: 0-1000
+    """
 
-        if not 0 <= value <= 1000:
-            raise ValueError("value must be between 0 and 1000")
+    if not 0 <= value <= 1000:
+        raise ValueError("value must be between 0 and 1000")
 
-        # value = int((value - 0) * (650 - 200) / (1000 - 0) + 200)
-
-        move_servo(1, value, int(1000 / speed))
-    else:
-        move_servo(1, 650, int(1000 / speed))
+    move_servo(1, value, int(1000 / speed))
 
 
 def movej(joint: tuple, time: int) -> None:
+    """
+    Move each servomotors to joint position within time.
 
-    """Move each servomotors to joint position within time.
-
-        joint: tuple(j1, j2, j3, j4, j5) | jx: 0-1000
-        time: 0-65535 milliseconds
-
+    :param joint: tuple(j1, j2, j3, j4, j5) | jx: 0-1000
+    :param time: 0-65535 milliseconds
     """
 
     move_servos((2, 3, 4, 5, 6), joint[::-1], int(time / speed))
 
 
 def movel(point: tuple, time: int, hand_orientation=500, approach_angle=FREE_ANGLE, waypoints=1) -> None:
+    """
+    Move arm to point position within time.
 
-    """Move arm to point position within time.
-
-            point: tuple(x, y, z)
-            time: 0-65535 milliseconds
-            orientation: the orientation of the hand
-            approach_angle: calculates the angles considering a specific approach angle (degrees)
-            waypoints: number of points through which the arm will pass (Allows a more linear movement)
-
+    :param point: tuple(x, y, z)
+    :param time: 0-65535 milliseconds
+    :param hand_orientation: orientation of the hand
+    :param approach_angle: calculates the angles considering a specific approach angle (degrees)
+    :param waypoints: number of points through which the arm will pass (Allows a more linear movement)
     """
 
     if approach_angle != FREE_ANGLE:
@@ -78,14 +83,12 @@ def movel(point: tuple, time: int, hand_orientation=500, approach_angle=FREE_ANG
 
 
 def appro(point: tuple, offset: tuple) -> tuple:
+    """
+    Add offset to point.
 
-    """Add offset to point.
-
-            point: tuple(x, y, z)
-            offset: tuple(x, y, z)
-
-            return: tuple(x, y, z)
-
+    :param point: tuple(x, y, z)
+    :param offset: tuple(x, y, z)
+    :return: tuple(x, y, z)
     """
 
     new_point = list()
@@ -96,12 +99,11 @@ def appro(point: tuple, offset: tuple) -> tuple:
 
 
 def get_position(cartesian=False) -> tuple:
+    """
+    Return each servos position or return position in cartesian referential.
 
-    """Return each servos position or return position in cartesian referential.
-
-            return: tuple(j1, j2, j3, j4, j5) | jx: 0-1000
-            or
-            return: tuple(x, y, z)
+    :param cartesian: cartesian position ?
+    :return: tuple(x, y, z) or tuple(j1, j2, j3, j4, j5) | jx: 0-1000
     """
 
     position = get_servos_position((6, 5, 4, 3, 2))
